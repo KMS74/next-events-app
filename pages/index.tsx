@@ -1,9 +1,12 @@
 import EventList from "@/components/events/EventList";
-import { getFeaturedEvents } from "@/dummy-data";
+import { getFeaturedEvents } from "@/helpers/api-utils";
+import { EventType } from "@/types/event";
+import { GetStaticProps, InferGetStaticPropsType } from "next";
 import Head from "next/head";
 
-export default function Home() {
-  const featuredEvents = getFeaturedEvents();
+export default function Home({
+  events,
+}: InferGetStaticPropsType<typeof getStaticProps>) {
   return (
     <>
       <Head>
@@ -13,8 +16,22 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-        <EventList events={featuredEvents} />
+        <EventList events={events} />
       </main>
     </>
   );
 }
+
+// Incremental Static Regeneration (ISR):
+export const getStaticProps: GetStaticProps<{
+  events: EventType[];
+}> = async () => {
+  const featuredEvents = await getFeaturedEvents();
+  return {
+    props: {
+      events: featuredEvents,
+    },
+    // everry 30 minutes the page will be re-generated
+    revalidate: 1800,
+  };
+};

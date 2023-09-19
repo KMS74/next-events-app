@@ -1,25 +1,25 @@
 import React from "react";
-import { useRouter } from "next/router";
-import { EventType, getEventById } from "@/dummy-data";
+import {
+  getAllEvents,
+  getEventById,
+  getFeaturedEvents,
+} from "@/helpers/api-utils";
 import EventSummary from "@/components/event-detail/event-summary";
 import EventLogistics from "@/components/event-detail/event-logistics";
 import EventContent from "@/components/event-detail/event-content";
 import Button from "@/components/ui/Button";
 import ErrorAlert from "@/components/ui/error-alert/error-alert";
+import { EventType } from "@/types/event";
+import { GetStaticPaths, GetStaticProps, InferGetStaticPropsType } from "next";
 
-const EventDetailsPage = () => {
-  const router = useRouter();
-  const eventId = router.query.eventId;
-  const event = getEventById(eventId as string);
-
+const EventDetailsPage = ({
+  event,
+}: InferGetStaticPropsType<typeof getStaticProps>) => {
   if (!event)
     return (
-      <>
-        <ErrorAlert>No event found!</ErrorAlert>
-        <div className="center">
-          <Button link="/events">Show all events</Button>
-        </div>
-      </>
+      <div className="center">
+        <p>Loading...</p>
+      </div>
     );
 
   return (
@@ -37,3 +37,32 @@ const EventDetailsPage = () => {
 };
 
 export default EventDetailsPage;
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const featuredEvents = await getFeaturedEvents();
+  // Get the paths we want to pre-render based on events
+  const paths = featuredEvents?.map((event) => ({
+    params: {
+      eventId: event.id,
+    },
+  }));
+
+  return {
+    paths,
+    fallback: "blocking",
+  };
+};
+
+export const getStaticProps: GetStaticProps<{
+  event: EventType;
+}> = async (context) => {
+  const eventId = context.params?.eventId as string;
+  const event = (await getEventById(eventId)) as EventType;
+
+  return {
+    props: {
+      event,
+    },
+    revalidate: 30,
+  };
+};

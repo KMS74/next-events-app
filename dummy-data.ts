@@ -1,14 +1,7 @@
-export type EventType = {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  date: string;
-  image: string;
-  isFeatured: boolean;
-};
+import { EventType } from "./types/event";
 
-const DUMMY_EVENTS: EventType[] = [
+const DUMMY_EVENTS: EventType[] =
+  [
   {
     id: "e1",
     title: "Programming for everyone",

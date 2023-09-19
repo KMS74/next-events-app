@@ -1,4 +1,3 @@
-import { EventType } from "@/dummy-data";
 import Link from "next/link";
 import React from "react";
 import Image from "next/image";
@@ -7,6 +6,7 @@ import Button from "../ui/Button";
 import DateIcon from "../icons/date-icon";
 import AddressIcon from "../icons/address-icon";
 import ArrowRightIcon from "../icons/arrow-right-icon";
+import { EventType } from "@/types/event";
 
 type Props = {
   event: EventType;

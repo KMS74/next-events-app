@@ -2,29 +2,20 @@ import ErrorAlert from "@/components/ui/error-alert/error-alert";
 import EventList from "@/components/events/EventList";
 import ResultsTitle from "@/components/results-title/results-title";
 import Button from "@/components/ui/Button";
-import { getFilteredEvents } from "@/dummy-data";
-import { useRouter } from "next/router";
-import React from "react";
+import { GetServerSideProps, InferGetServerSidePropsType } from "next";
+import { getFilteredEvents } from "@/helpers/api-utils";
+import { EventType } from "@/types/event";
 
-const FilteredEventsPage = () => {
-  const router = useRouter();
-  const filterData = router.query.slug as string[];
+const FilteredEventsPage = ({
+  events,
+  date,
+  hasError,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+  console.log({ events, date, hasError });
 
-  if (!filterData) return <ErrorAlert>Loading...</ErrorAlert>;
+  const filterDate = new Date(date.year, date.month - 1);
 
-  const [year, month] = filterData;
-  const filterDate = { year: +year, month: +month };
-  const date = new Date(filterDate.year, filterDate.month - 1);
-  const filteredEvents = getFilteredEvents(filterDate);
-
-  if (
-    isNaN(filterDate.year) ||
-    isNaN(filterDate.month) ||
-    filterDate.year > 2030 ||
-    filterDate.year < 2021 ||
-    filterDate.month > 12 ||
-    filterDate.month < 1
-  ) {
+  if (hasError) {
     return (
       <>
         <ErrorAlert>Invalid filter. Please adjust your values!</ErrorAlert>
@@ -37,10 +28,10 @@ const FilteredEventsPage = () => {
 
   return (
     <>
-      {filteredEvents && filteredEvents.length > 0 ? (
+      {events && events.length > 0 ? (
         <>
-          <ResultsTitle date={date} />
-          <EventList events={filteredEvents} />
+          <ResultsTitle date={filterDate} />
+          <EventList events={events} />
         </>
       ) : (
         <>
@@ -55,3 +46,39 @@ const FilteredEventsPage = () => {
 };
 
 export default FilteredEventsPage;
+
+export const getServerSideProps: GetServerSideProps<{
+  events: EventType[];
+  hasError: boolean;
+  date: {
+    year: number;
+    month: number;
+  };
+}> = async (context) => {
+  const filterData = context.params?.slug as string[];
+  const [year, month] = filterData;
+  const filterDate = { year: +year, month: +month };
+
+  let hasError = false;
+
+  if (
+    isNaN(filterDate.year) ||
+    isNaN(filterDate.month) ||
+    filterDate.year > 2030 ||
+    filterDate.year < 2021 ||
+    filterDate.month > 12 ||
+    filterDate.month < 1
+  ) {
+    hasError = true;
+  }
+
+  const filteredEvents = await getFilteredEvents(filterDate);
+
+  return {
+    props: {
+      events: filteredEvents,
+      hasError,
+      date: filterDate,
+    },
+  };
+};
